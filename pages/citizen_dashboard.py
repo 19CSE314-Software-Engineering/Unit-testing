@@ -23,6 +23,7 @@ tab1, tab2, tab3 = st.tabs(["📝 Create Complaint", "📋 View Complaints", "�
 ### TAB 1: Create Complaint Form
 with tab1:
     st.subheader("📝 Submit a Complaint")
+    st.write("If you have any complaints, please fill out the form below.")
     st.write("Please provide the necessary details below.")
 
     # Form inputs with styling
@@ -59,6 +60,7 @@ with tab1:
 ### TAB 2: View Complaint Status with Status & Timestamp
 with tab2:
     st.subheader("📋 Your Complaints")
+    st.write("View the status of your previously submitted complaints.")
     email = st.text_input("📧 Enter your email to view complaints", key="status_email")
 
     if st.button("🔍 Fetch Complaints"):
