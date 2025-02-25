@@ -10,6 +10,8 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 # Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase.postgrest.auth(SUPABASE_KEY)
+
 
 st.set_page_config(page_title="Change Password", page_icon="🔑")
 

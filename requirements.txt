@@ -2,3 +2,5 @@ streamlit
 supabase
 python-dotenv
 streamlit-extras
+folium
+streamlit_folium

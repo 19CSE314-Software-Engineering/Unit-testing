@@ -15,6 +15,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 # Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase.postgrest.auth(SUPABASE_KEY)
 
 # Streamlit UI
 st.set_page_config(page_title="Citizen & Employee Portal", page_icon="🔐", layout="centered")

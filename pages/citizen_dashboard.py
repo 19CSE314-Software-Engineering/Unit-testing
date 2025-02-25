@@ -11,6 +11,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 client = supabase.create_client(SUPABASE_URL, SUPABASE_KEY)
 
+
 st.set_page_config(page_title="Citizen Dashboard", page_icon="🏛", layout="wide")
 
 # Welcome Text
