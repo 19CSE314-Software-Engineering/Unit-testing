@@ -58,7 +58,7 @@ tab1, tab2, tab3 = st.tabs(["Citizen", "Employee Login", "Admin Login"])
 with tab1:
     st.subheader("Citizen Login")
     st.write("Click below to continue as a citizen user.")
-    st.page_link("pages/citizen_dashboard.py", label="Go to Citizen Dashboard", icon="🏛")
+    st.page_link("pages/CITIZEN_DASHBOARD.py", label="Go to Citizen Dashboard", icon="🏛")
 
     
 
@@ -84,6 +84,7 @@ with tab2:
                 if response and response.user:
                     st.session_state["user"] = response.user
                     st.session_state["role"] = "Employee"
+                    
 
                     # Step 2: Fetch employee details (including department)
                     emp_response = (
@@ -99,19 +100,23 @@ with tab2:
 
                         # Store in session state
                         st.session_state["dept"] = department_name
+                        st.session_state["employee_id"] = employee["id"]
+                        print(employee)
 
                         # Step 3: Redirect based on department
                         if department_name.lower() == "water":
                             st.success("Login successful! Redirecting to Water Management...")
-                            switch_page("water_management")
+                            switch_page("water station updation")
 
-                        elif department_name.lower() == "electricity":
+                        if department_name.lower() == "electricity":
+                            st.session_state["employee_id"] = int(employee["id"])  # Ensure employee_id is an integer
                             st.success("Login successful! Redirecting to Electricity Management...")
-                            switch_page("electricity_management")
+                            switch_page("electricity substation updation")
+
 
                         else:
                             st.success("Login successful! Redirecting to Dashboard...")
-                            switch_page("dashboard")
+                            switch_page("admin dashboard")
 
                     else:
                         st.error("Employee record not found.")
@@ -147,7 +152,7 @@ with tab3:
                     st.session_state["user"] = response.user
                     st.session_state["role"] = "Admin"
                     st.success("Admin login successful!")
-                    switch_page("dashboard")  # Redirect to Admin Dashboard
+                    switch_page("admin dashboard")  # Redirect to Admin Dashboard
                 else:
                     st.error("Invalid credentials, please try again.")
             except Exception as e:
