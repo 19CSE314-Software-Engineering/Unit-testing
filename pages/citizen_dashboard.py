@@ -81,8 +81,8 @@ with tab2:
 with tab3:
     st.subheader("🔔 Notifications")
     
-    # Fetch notifications from Supabase
-    response = client.table("notifications").select("notification, created_at").execute()
+    # Fetch notifications from Supabase in descending order
+    response = client.table("notifications").select("notification, created_at").order("created_at", desc=True).execute()
     
     if response.data:
         st.write("Latest Notifications:")

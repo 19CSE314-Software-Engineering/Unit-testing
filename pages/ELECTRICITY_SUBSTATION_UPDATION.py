@@ -22,6 +22,30 @@ else:
 st.set_page_config(page_title="Electricity Substation Management", page_icon="⚡", layout="wide")
 st.title("Electricity Substation Management")
 
+
+# Navigation Buttons
+st.divider()
+st.write("🔗 **Navigation**")
+
+col_nav1, col_nav2, col_nav3 = st.columns(3)
+
+with col_nav1:
+    if st.button("📊 View Substation Statistics"):
+        st.switch_page("pages/ELECTRICITY_SUBSTATION_STATISTICS.py")
+
+with col_nav2:
+    if st.button("🗺 View Substation Mapping"):
+        st.switch_page("pages/ELECTRICITY_SUBSTATION_MAPPING.py")
+
+with col_nav3:
+    if st.button("🗺 View Substation Updation"):
+        st.switch_page("pages/ELECTRICITY_SUBSTATION_UPDATION.py")
+
+st.divider()
+
+
+
+
 # Check authentication
 if "employee_id" not in st.session_state:
     st.error("User is not authenticated.")

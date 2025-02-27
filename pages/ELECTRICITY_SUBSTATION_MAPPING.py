@@ -52,6 +52,29 @@ st.set_page_config(layout="wide", page_title="Electricity Substation Dashboard",
 st.title("⚡ Electricity Substation Dashboard")
 st.write("Real-time monitoring and management of electricity substations")
 
+
+
+# Navigation Buttons
+st.divider()
+st.write("🔗 **Navigation**")
+
+col_nav1, col_nav2, col_nav3 = st.columns(3)
+
+with col_nav1:
+    if st.button("📊 View Substation Statistics"):
+        st.switch_page("pages/ELECTRICITY_SUBSTATION_STATISTICS.py")
+
+with col_nav2:
+    if st.button("🗺 View Substation Mapping"):
+        st.switch_page("pages/ELECTRICITY_SUBSTATION_MAPPING.py")
+
+with col_nav3:
+    if st.button("🗺 View Substation Updation"):
+        st.switch_page("pages/ELECTRICITY_SUBSTATION_UPDATION.py")
+
+st.divider()
+
+
 # Fetch data from Supabase
 substation_data = fetch_substation_data()
 

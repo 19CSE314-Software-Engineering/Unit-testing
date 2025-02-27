@@ -51,6 +51,27 @@ st.set_page_config(layout="wide", page_title="Australian Infrastructure Dashboar
 st.title("🦘 Australian Infrastructure Dashboard")
 st.write("Real-time monitoring and management of tank facilities")
 
+# Navigation Buttons
+st.divider()
+st.write("🔗 **Navigation**")
+
+col_nav1, col_nav2, col_nav3 = st.columns(3)
+
+with col_nav1:
+    if st.button("📊 View Substation Statistics"):
+        st.switch_page("pages/WATER_STATION_STATISTICS.py")
+
+with col_nav2:
+    if st.button("🗺 View Substation Mapping"):
+        st.switch_page("pages/WATER_STATION_MAPPING.py")
+
+with col_nav3:
+    if st.button("🗺 View Substation Updation"):
+        st.switch_page("pages/WATER_STATION_UPDATION.py")
+
+st.divider()
+
+
 # Fetch data from Supabase
 tank_data = fetch_tank_data()
 

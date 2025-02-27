@@ -4,6 +4,29 @@ import pandas as pd  # For data tables (optional but often useful)
 
 st.title("Electricity Board Management (This is a Static Page)")
 
+# Navigation Buttons
+st.divider()
+st.write("🔗 **Navigation**")
+
+col_nav1, col_nav2, col_nav3 = st.columns(3)
+
+with col_nav1:
+    if st.button("📊 View Substation Statistics"):
+        st.switch_page("pages/ELECTRICITY_SUBSTATION_STATISTICS.py")
+
+with col_nav2:
+    if st.button("🗺 View Substation Mapping"):
+        st.switch_page("pages/ELECTRICITY_SUBSTATION_MAPPING.py")
+
+with col_nav3:
+    if st.button("🗺 View Substation Updation"):
+        st.switch_page("pages/ELECTRICITY_SUBSTATION_UPDATION.py")
+
+st.divider()
+
+
+
+
 st.header("Current Power Status")
 
 # Example data (REPLACE with your actual data source)

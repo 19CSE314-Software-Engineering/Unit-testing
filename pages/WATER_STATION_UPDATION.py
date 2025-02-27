@@ -20,12 +20,33 @@ else:
 
 # Streamlit UI
 st.set_page_config(page_title="Tank Management", page_icon="💧", layout="wide")
-st.title("Water Tank Management")
+st.title("💧 Water Tank Management")
+
+
+# Navigation Buttons
+st.divider()
+st.write("🔗 **Navigation**")
+
+col_nav1, col_nav2, col_nav3 = st.columns(3)
+
+with col_nav1:
+    if st.button("📊 View Substation Statistics"):
+        st.switch_page("pages/WATER_STATION_STATISTICS.py")
+
+with col_nav2:
+    if st.button("🗺 View Substation Mapping"):
+        st.switch_page("pages/WATER_STATION_MAPPING.py")
+
+with col_nav3:
+    if st.button("🗺 View Substation Updation"):
+        st.switch_page("pages/WATER_STATION_UPDATION.py")
+
+st.divider()
 
 # Simulate employee authentication (Replace with actual authentication logic)
-# if "employee_id" not in st.session_state:
-#     st.error("User is not authenticated.")
-#     st.stop()
+if "employee_id" not in st.session_state:
+    st.error("User is not authenticated.")
+    st.stop()
 
 employee_id = st.session_state["employee_id"]
 
@@ -46,20 +67,20 @@ if not tank_details:
     st.warning("You are not assigned to any water tank.")
 else:
     tank = tank_details[0]  # Assuming one tank per employee
-    st.subheader(f"Water Tank in {tank['state_name']}")
+    st.subheader(f"🚰 Water Tank in {tank['state_name']}")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.write("**Status:**", tank.get("status", "N/A"))
-        st.write("**Description:**", tank.get("description", "N/A"))
-        st.write("**Last Updated:**", tank.get("last_updated", "N/A"))
+        st.write("**🔹 Status:**", tank.get("status", "N/A"))
+        st.write("**📌 Description:**", tank.get("description", "N/A"))
+        st.write("**📅 Last Updated:**", tank.get("last_updated", "N/A"))
     
     with col2:
-        st.write("**Capacity:**", f"{tank.get('capacity', 'N/A')} liters")
-        water_level = st.text_input("Water Level (%)", value=tank.get("water_level", "N/A"))
+        st.write("**📏 Capacity:**", f"{tank.get('capacity', 'N/A')} liters")
+        water_level = st.text_input("💦 Water Level (%)", value=tank.get("water_level", "N/A"))
         
-        if st.button("Update Water Level"):
+        if st.button("✅ Update Water Level"):
             try:
                 update_response = (
                     supabase.table("tank_details")
@@ -68,8 +89,10 @@ else:
                     .execute()
                 )
                 if update_response and hasattr(update_response, "data") and update_response.data:
-                    st.success("Water level updated successfully!")
+                    st.success("✔ Water level updated successfully!")
                 else:
-                    st.error("Failed to update water level.")
+                    st.error("❌ Failed to update water level.")
             except Exception as e:
-                st.error(f"Error: {str(e)}")
+                st.error(f"⚠ Error: {str(e)}")
+
+
