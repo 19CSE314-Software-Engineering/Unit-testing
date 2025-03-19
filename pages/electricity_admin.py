@@ -115,15 +115,27 @@ with tab2:
                 status_options = ["Pending", "In Progress", "Resolved"]
                 selected_status = st.selectbox(f"Update Status", status_options, index=status_options.index(complaint["status"]) if complaint["status"] in status_options else 0, key=f"status_{complaint['id']}")
                 
-                # Assign employee (show name instead of index)
-                selected_employee = st.selectbox(
+                
+
+                # Create a dictionary to map employee names to their IDs
+                employee_options = {emp["name"]: emp["id"] for emp in employees} if employees else {}
+
+                # Reverse mapping to find the selected employee's name from the stored ID
+                assigned_employee_id = complaint["assign"]
+                assigned_employee_name = next((name for name, emp_id in employee_options.items() if emp_id == assigned_employee_id), None)
+
+                # Assign Employee using Employee Name but store Employee ID
+                selected_employee_name = st.selectbox(
                     f"Assign Employee",
-                    employees,
-                    index=employees.index(complaint["assign"]) if complaint["assign"] in employees else 0,
+                    list(employee_options.keys()),  # Display names
+                    index=list(employee_options.keys()).index(assigned_employee_name) if assigned_employee_name in employee_options else 0,
                     key=f"employee_{complaint['id']}"
                 ) if employees else None
+
+                # Get the selected employee's ID
+                selected_employee_id = employee_options[selected_employee_name] if selected_employee_name else None
                 
                 if st.button(f"Update", key=f"update_{complaint['id']}"):
-                    update_complaint(complaint['id'], selected_status, selected_employee)
+                    update_complaint(complaint['id'], selected_status, selected_employee_id)
     else:
         st.warning("No complaints found.")

@@ -59,6 +59,12 @@ with tab2:
                 # Step 1: Authenticate user
                 response = supabase.auth.sign_in_with_password({"email": email, "password": password})
 
+                if response and email=="mayor@gmail.com":
+                    st.session_state["user"] = response.user
+                    st.session_state["role"] = "Mayor"
+                    st.success("Login successful! Redirecting to Mayor Dashboard...")
+                    switch_page("mayor dashboard")
+
                 if response and response.user:
                     st.session_state["user"] = response.user
                     st.session_state["role"] = "Employee"
