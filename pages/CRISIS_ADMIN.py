@@ -17,7 +17,11 @@ st.title("Crisis Management - Admin Panel")
 
 # Debugging - Print session state
 st.write("🔍 **DEBUG INFO:**")
-st.write("👤 User:", st.session_state.get("user").email)
+try: 
+    st.write("👤 User:", st.session_state.get("user").email)
+except:
+    st.write("👤 User: None")
+    
 st.write("🛂 Role:", st.session_state.get("role"))
 
 # Ensure user is logged in as an Employee in the Crisis Management department

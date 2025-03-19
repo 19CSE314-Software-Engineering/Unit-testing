@@ -3,6 +3,10 @@ from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
 import datetime
+from streamlit_extras.switch_page_button import switch_page
+
+from utils import add_logout_button 
+
 
 # Load environment variables
 load_dotenv()
@@ -18,9 +22,16 @@ else:
     st.error("Supabase credentials are not set. Please check environment variables.")
     st.stop()
 
+
+if "employee_id" not in st.session_state:
+    st.error("User is not authenticated.")
+    st.stop()
+
 # Streamlit UI
 st.set_page_config(page_title="Tank Management", page_icon="💧", layout="wide")
 st.title("💧 Water Tank Management")
+
+add_logout_button()
 
 
 # Navigation Buttons
@@ -94,5 +105,3 @@ else:
                     st.error("❌ Failed to update water level.")
             except Exception as e:
                 st.error(f"⚠ Error: {str(e)}")
-
-

@@ -3,6 +3,9 @@ from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
 import datetime
+from utils import add_logout_button 
+from streamlit_extras.switch_page_button import switch_page
+
 
 # Load environment variables
 load_dotenv()
@@ -18,10 +21,16 @@ else:
     st.error("Supabase credentials are missing. Please check environment variables.")
     st.stop()
 
+# Check authentication
+if "employee_id" not in st.session_state:
+    st.error("User is not authenticated.")
+    st.stop()
+
 # Streamlit UI
 st.set_page_config(page_title="Electricity Substation Management", page_icon="⚡", layout="wide")
 st.title("Electricity Substation Management")
 
+add_logout_button()
 
 # Navigation Buttons
 st.divider()
@@ -46,10 +55,7 @@ st.divider()
 
 
 
-# Check authentication
-if "employee_id" not in st.session_state:
-    st.error("User is not authenticated.")
-    st.stop()
+
 
 employee_id = st.session_state["employee_id"]
 

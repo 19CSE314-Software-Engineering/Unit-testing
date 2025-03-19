@@ -2,6 +2,8 @@ import streamlit as st
 from supabase import create_client
 import os
 from dotenv import load_dotenv
+from utils import add_logout_button 
+
 
 # Load environment variables
 load_dotenv()

@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from streamlit_extras.switch_page_button import switch_page
 
+
 # Load environment variables
 load_dotenv()
 
@@ -27,29 +28,6 @@ if "user" not in st.session_state:
     st.session_state["user"] = None
     st.session_state["role"] = None
     st.session_state["page"] = "Home"
-
-# # Centered layout with navigation box
-# st.markdown("""
-#     <style>
-#         .navbox {
-#             display: flex;
-#             flex-direction: column;
-#             align-items: center;
-#             justify-content: center;
-#             width: 350px;
-#             padding: 20px;
-#             border: 2px solid #ddd;
-#             border-radius: 10px;
-#             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-#             background-color: white;
-#             text-align: center;
-#         }
-#         .stTabs {
-#             display: flex;
-#             justify-content: center;
-#         }
-#     </style>
-# """, unsafe_allow_html=True)
 
 st.markdown('<div class="navbox">', unsafe_allow_html=True)
 
@@ -89,7 +67,7 @@ with tab2:
                     # Step 2: Fetch employee details (including department)
                     emp_response = (
                         supabase.table("employees")
-                        .select("id, name, dept_id, department(dept_name)")
+                        .select("id, name, dept_id, department(dept_name), position_id, positions(position_name)")
                         .eq("email", email)
                         .execute()
                     )
@@ -97,7 +75,8 @@ with tab2:
                     if emp_response.data and len(emp_response.data) > 0:
                         employee = emp_response.data[0]
                         department_name = employee["department"]["dept_name"]
-
+                        position_name = employee["positions"]["position_name"]  # Fetch position
+                       
                         # Store in session state
                         st.session_state["dept"] = department_name
                         st.session_state["employee_id"] = employee["id"]
@@ -105,13 +84,23 @@ with tab2:
 
                         # Step 3: Redirect based on department
                         if department_name.lower() == "water":
-                            st.success("Login successful! Redirecting to Water Management...")
-                            switch_page("water station updation")
+                            if position_name.lower() == "admin":
+                                st.session_state["role"] = "Water Admin"
+                                st.success("Login successful! Redirecting to Water Admin Dashboard...")
+                                switch_page("water admin")
+                            else:
+                                st.success("Login successful! Redirecting to Water Management...")
+                                switch_page("water station updation")
 
                         if department_name.lower() == "electricity":
-                            st.session_state["employee_id"] = int(employee["id"])  # Ensure employee_id is an integer
-                            st.success("Login successful! Redirecting to Electricity Management...")
-                            switch_page("electricity substation updation")
+                            if position_name.lower() == "admin":
+                                st.session_state["role"] = "Electricity Admin"
+                                st.success("Login successful! Redirecting to Electricity Admin Dashboard...")
+                                switch_page("electricity admin")
+                            else:
+                                st.session_state["employee_id"] = int(employee["id"])  # Ensure employee_id is an integer
+                                st.success("Login successful! Redirecting to Electricity Management...")
+                                switch_page("electricity substation updation")
 
 
                         else:
@@ -129,13 +118,6 @@ with tab2:
 
         else:
             st.warning("Please enter email and password.")
-    
-    # if logout_button and st.session_state["user"]:
-    #     supabase.auth.sign_out()
-    #     st.session_state["user"] = None
-    #     st.session_state["role"] = None
-    #     st.success("Logged out successfully!")
-    #     st.experimental_rerun()
 
 
 with tab3:

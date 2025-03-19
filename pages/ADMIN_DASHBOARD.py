@@ -5,6 +5,10 @@ from dotenv import load_dotenv
 from streamlit_extras.switch_page_button import switch_page
 import pandas as pd
 import datetime
+from streamlit_extras.switch_page_button import switch_page
+import time
+from utils import add_logout_button 
+
 
 # Load environment variables
 load_dotenv()
@@ -19,7 +23,20 @@ supabase.postgrest.auth(SUPABASE_KEY)
 # Streamlit UI
 st.set_page_config(page_title="Admin Dashboard", page_icon="🔐", layout="wide")
 
+
+if "role" not in st.session_state or st.session_state["role"] != "Admin":
+    st.error("Access Denied. Only Electricity Admins can access this page.")
+    time.sleep(2)
+    switch_page("main") # Redirect to Home page
+
+
 st.title("Admin Dashboard")
+
+
+
+add_logout_button()
+
+
 
 # Tabs for Employee Management
 tab1, tab2 = st.tabs(["Create Employee", "View Employees"])
