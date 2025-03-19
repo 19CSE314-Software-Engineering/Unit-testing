@@ -39,7 +39,7 @@ add_logout_button()
 
 
 # Tabs for Employee Management
-tab1, tab2 = st.tabs(["Create Employee", "View Employees"])
+tab1, tab2, tab3 = st.tabs(["Create Employee", "View Employees", "Create Department & Position"])
 
 ### **🔹 Tab 1: Create Employee**
 with tab1:
@@ -139,3 +139,46 @@ with tab2:
         df = pd.DataFrame(employees)
         df.rename(columns={"dept_name": "Department", "position_name": "Position"}, inplace=True)
         st.dataframe(df, hide_index=True)
+
+with tab3:
+    st.subheader("Root Admin Panel")
+    
+    st.write("### Manage Departments")
+    new_dept_name = st.text_input("New Department Name")
+
+    if st.button("Create Department"):
+        if new_dept_name:
+            dept_data = {"dept_name": new_dept_name}
+            response = supabase.table("department").insert(dept_data).execute()
+            if response.data:
+                st.success("Department added successfully!")
+            else:
+                st.error("Failed to add department.")
+        else:
+            st.warning("Enter a department name.")
+
+    st.write("### Manage Positions")
+    # Fetch departments again for position creation
+    dept_response = supabase.table("department").select("dept_id, dept_name").execute()
+    departments = dept_response.data if dept_response.data else []
+
+    if departments:
+        dept_options = {dept["dept_name"]: dept["dept_id"] for dept in departments}
+        selected_dept_for_position = st.selectbox("Select Department for Position", list(dept_options.keys()))
+        selected_dept_id = dept_options[selected_dept_for_position]
+
+        new_position_name = st.text_input("New Position Name")
+        
+        if st.button("Create Position"):
+            if new_position_name:
+                position_data = {"position_name": new_position_name, "dept_id": selected_dept_id}
+                response = supabase.table("positions").insert(position_data).execute()
+                
+                if response.data:
+                    st.success("Position added successfully!")
+                else:
+                    st.error("Failed to add position.")
+            else:
+                st.warning("Enter a position name.")
+    else:
+        st.warning("No departments found. Please create a department first.")
