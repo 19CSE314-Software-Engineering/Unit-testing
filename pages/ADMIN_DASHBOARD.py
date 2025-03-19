@@ -78,6 +78,7 @@ with tab1:
             name = st.text_input("Full Name")
             email = st.text_input("Email (Must be Unique)")
             dob = st.date_input("Date of Birth", min_value=datetime.date(1900, 1, 1), max_value=datetime.date(2025, 12, 31))
+            contact_number = st.text_input("Contact Number")  # New input field
             gender = st.selectbox("Gender", ["Male", "Female", "Other"])
             default_password = "abcdef"
 
@@ -100,6 +101,7 @@ with tab1:
                                     "name": name,
                                     "email": email,
                                     "dob": dob.strftime("%Y-%m-%d"),
+                                    "contact_number": contact_number,
                                     "gender": gender,
                                     "dept_id": selected_dept_id,
                                     "position_id": selected_position_id
@@ -142,7 +144,7 @@ with tab2:
 
 with tab3:
     st.subheader("Root Admin Panel")
-    
+
     st.write("### Manage Departments")
     new_dept_name = st.text_input("New Department Name")
 
