@@ -122,6 +122,7 @@ with tab1:
 
 
 ### **🔹 Tab 2: View Employees**
+### **🔹 Tab 2: View Employees**
 with tab2:
     st.subheader("Employee List")
 
@@ -137,9 +138,22 @@ with tab2:
     if not employees:
         st.info("No employees found.")
     else:
+        # Process the nested data before creating DataFrame
+        processed_employees = []
+        for emp in employees:
+            processed_emp = emp.copy()
+            # Extract department name from nested object
+            if "department" in processed_emp and processed_emp["department"]:
+                processed_emp["department"] = processed_emp["department"]["dept_name"]
+            # Extract position name from nested object
+            if "positions" in processed_emp and processed_emp["positions"]:
+                processed_emp["positions"] = processed_emp["positions"]["position_name"]
+            processed_employees.append(processed_emp)
+            
         # Convert to DataFrame and display
-        df = pd.DataFrame(employees)
-        df.rename(columns={"dept_name": "Department", "position_name": "Position"}, inplace=True)
+        df = pd.DataFrame(processed_employees)
+        # You can rename columns if needed
+        df.rename(columns={"department": "Department", "positions": "Position"}, inplace=True)
         st.dataframe(df, hide_index=True)
 
 with tab3:
