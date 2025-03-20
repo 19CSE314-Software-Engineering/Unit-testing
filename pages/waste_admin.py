@@ -30,7 +30,7 @@ add_logout_button()
 # Fetch employees
 def fetch_employees():
     try:
-        response = supabase.table("employees").select("id, name").eq("dept_id", 2).execute()
+        response = supabase.table("employees").select("id, name").eq("dept_id", 5).execute()
         return response.data if response.data else []
     except Exception as e:
         st.error(f"Error fetching employees: {e}")

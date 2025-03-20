@@ -18,7 +18,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Function to fetch waste collection site details from the database
 def fetch_waste_data():
     try:
-        response = supabase.table("waste_sites").select("*, employees(name, id)").execute()
+        response = supabase.table("waste_facilities").select("*, employees(name, id)").execute()
         if response.data:
             return response.data
         return []
@@ -57,23 +57,27 @@ for site in waste_data:
         if waste_level is None:
             continue  # Skip if waste level is invalid
         color = get_color(waste_level)  # Get color based on waste level
-
-        folium.Marker(
-            location=coordinates,
-            icon=folium.Icon(color=color, icon="trash"),
+        polygon = folium.Polygon(
+            locations=coordinates,
+            color=color,
+            fill=True,
+            fill_color=color,
+            fill_opacity=0.4,
+            weight=2,
             popup=folium.Popup(
                 f"""
                 <div style='width:250px'>
-                    <h4 style='color:{color}; margin-bottom:10px'>{site['location_name']}</h4>
-                    <p><b>Waste Level:</b> {waste_level}%</p>
-                    <p><b>Capacity:</b> {site['capacity']:,} kg</p>
+                    <h4 style='color:{color}; margin-bottom:10px'>{site['state_name']}</h4>
+                    <p><b>Water Level:</b> {waste_level}%</p>
+                    <p><b>Capacity:</b> {site['capacity']:,}</p>
                     <p><b>In charge:</b> {site['employees']['name'] if 'employees' in site else 'Unknown'}</p>
                     <p><small>Last Updated: {site['last_updated']}</small></p>
                 </div>
                 """,
                 max_width=300
             )
-        ).add_to(m)
+        )
+        
     except Exception as e:
         st.warning(f"Error rendering waste site {site.get('site_id', 'Unknown')}: {e}")
 
