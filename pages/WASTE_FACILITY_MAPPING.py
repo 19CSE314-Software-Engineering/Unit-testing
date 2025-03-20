@@ -27,12 +27,13 @@ def fetch_waste_data():
         return []
 
 # Function to determine color based on waste level
-def get_color(waste_level):
-    if waste_level is None:
+def get_color(waste_level,total_capacity):
+    per = waste_level/total_capacity*100
+    if per is None:
         return "gray"  # Default color if conversion fails
-    if waste_level < 30:
+    if per < 30:
         return "green"  # Low waste level
-    elif waste_level < 70:
+    elif per < 70:
         return "yellow"  # Medium waste level
     else:
         return "red"  # High waste level (Needs immediate attention)
@@ -54,9 +55,10 @@ for site in waste_data:
     try:
         coordinates = site["coordinates"]  # Directly use the list
         waste_level = site["waste_level"]  # Waste level percentage
+        total_capacity = site["capacity"]  # Total capacity of the site
         if waste_level is None:
             continue  # Skip if waste level is invalid
-        color = get_color(waste_level)  # Get color based on waste level
+        color = get_color(waste_level,total_capacity)  # Get color based on waste level
         polygon = folium.Polygon(
             locations=coordinates,
             color=color,
@@ -78,6 +80,9 @@ for site in waste_data:
             )
         )
         
+        # Add this line to actually add the polygon to the map
+        polygon.add_to(m)
+        
     except Exception as e:
         st.warning(f"Error rendering waste site {site.get('site_id', 'Unknown')}: {e}")
 
@@ -95,11 +100,13 @@ with col2:
 
     for site in waste_data:
         waste_level = site["waste_level"]
+        total_capacity = site["capacity"]
+        per = waste_level/total_capacity*100
         if waste_level is None:
             continue  # Skip if waste level is invalid
-        if waste_level < 30:
+        if per < 30:
             level_counts["Low (<30%)"] += 1
-        elif waste_level < 70:
+        elif per < 70:
             level_counts["Medium (30%-70%)"] += 1
         else:
             level_counts["High (>70%)"] += 1
