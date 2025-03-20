@@ -134,19 +134,102 @@ with col2:
     for crisis in crisis_data:
         crisis_counts[crisis["crisis_type"]] += 1
     
-    cols = st.columns(len(crisis_counts))
-    colors = ["red", "blue", "orange", "gray", "purple"]
+    # Completely redesigned crisis count cards
+    st.markdown("""
+        <style>
+        .crisis-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .crisis-card {
+            flex: 1;
+            min-width: 80px;
+            background: rgba(40, 40, 40, 0.8);
+            border-radius: 8px;
+            padding: 12px 8px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 90px;
+        }
+        .crisis-type {
+            font-size: 14px;
+            color: #DDDDDD;
+            margin-bottom: 8px;
+        }
+        .crisis-count {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        </style>
+        
+        <div class="crisis-grid">
+    """, unsafe_allow_html=True)
     
-    for i, (crisis_type, count) in enumerate(crisis_counts.items()):
-        with cols[i]:
-            st.markdown(f"""
-                <div style='padding:10px; background-color:rgba(150,150,150,0.1);border-radius:5px;margin:5px 0;'>
-                    <div style='font-size:14px;color:gray;'>{crisis_type}</div>
-                    <div style='font-size:24px;font-weight:bold;color:{colors[i]}'>{count}</div>
-                </div>
-            """, unsafe_allow_html=True)
+    colors = {"Fire": "#FF5252", "Flood": "#4B9BFF", "Earthquake": "#FFB74D", "Power Outage": "#9E9E9E", "Other": "#CE93D8"}
+    
+    for crisis_type, count in crisis_counts.items():
+        st.markdown(f"""
+            <div class="crisis-card">
+                <div class="crisis-type">{crisis_type}</div>
+                <div class="crisis-count" style="color: {colors[crisis_type]};">{count}</div>
+            </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
     
     st.subheader("📰 Crisis Newsboard")
+
+    # Improved styling for the newsboard
+    st.markdown("""
+        <style>
+        .news-container {
+            margin-top: 10px;
+        }
+        .news-card {
+            background: rgba(40, 40, 40, 0.8);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .news-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .news-title {
+            color: #FF5252;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .news-crisis-info {
+            color: #BBBBBB;
+            font-size: 13px;
+            margin-top: 3px;
+        }
+        .news-content {
+            color: #DDDDDD;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        .news-footer {
+            color: #999999;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        </style>
+        
+        <div class="news-container">
+    """, unsafe_allow_html=True)
 
     news_updates = fetch_news_updates()
 
@@ -158,14 +241,24 @@ with col2:
           
             st.markdown(
                 f"""
-                <div style="border: 1px solid #ddd; padding: 15px; border-radius: 10px; background-color: #f9f9f9; margin-bottom: 10px;">
-                    <h4 style="color: #d9534f;">{news['title']} - <span style="font-size: 14px; color: #555;">{crisis_name}{crisis_info}</span></h4>
-                    <p style="color: #000">{news['content']}</p>
-                    <p style="font-size: 12px; color: #888;"><strong>Posted by:</strong> {news['posted_by']} | <strong>🕒</strong> {news['created_at']}</p>
+                <div class="news-card">
+                    <div class="news-header">
+                        <div>
+                            <div class="news-title">{news['title']}</div>
+                            <div class="news-crisis-info">{crisis_name}{crisis_info}</div>
+                        </div>
+                    </div>
+                    <div class="news-content">{news['content']}</div>
+                    <div class="news-footer">
+                        <span><strong>Posted by:</strong> {news['posted_by']}</span>
+                        <span>🕒 {news['created_at']}</span>
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
+        
+        st.markdown("</div>", unsafe_allow_html=True)
     else:
         st.info("No recent crisis updates available.")
     # st.subheader("📰 Crisis Newsboard")

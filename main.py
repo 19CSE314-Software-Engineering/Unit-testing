@@ -108,6 +108,16 @@ with tab2:
                                 st.success("Login successful! Redirecting to Electricity Management...")
                                 switch_page("electricity substation updation")
 
+                        if department_name.lower() == "waste":
+                            if position_name.lower() == "admin":
+                                st.session_state["role"] = "Waste Admin"
+                                st.success("Login successful! Redirecting to Electricity Admin Dashboard...")
+                                switch_page("waste admin")
+                            else:
+                                st.session_state["employee_id"] = int(employee["id"])  # Ensure employee_id is an integer
+                                st.success("Login successful! Redirecting to Waste Management...")
+                                switch_page("waste facility updation")
+
 
                         else:
                             st.success("Login successful! Redirecting to Dashboard...")
