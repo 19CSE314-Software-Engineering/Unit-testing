@@ -19,11 +19,17 @@ st.write("Welcome to the Citizen Dashboard! Here you can submit complaints, view
 
 # Tabs for Navigation
 tab1, tab2, tab3, tab4 = st.tabs(["📝 Create Complaint", "📋 View Complaints", "🔔 Notifications", "💰 Welfare Schemes"])
-
 ### TAB 1: Create Complaint Form
 with tab1:
     st.subheader("📝 Submit a Complaint")
     st.write("If you have any complaints, please fill out the form below.")
+    
+    # Fetch distinct department names from department table
+    response = supabase.table("department").select("dept_name").execute()
+    if response.data:
+        departments = list(set([dept["dept_name"] for dept in response.data if "dept_name" in dept]))
+    else:
+        departments = ["General"]  # Default option if no departments are found
     
     with st.form(key="complaint_form"):
         col1, col2 = st.columns(2)
@@ -34,7 +40,7 @@ with tab1:
             phone_number = st.text_input("📞 Phone Number", placeholder="Enter your phone number")
 
         with col2:
-            category = st.selectbox("📂 Category", ["Water", "Electricity", "Waste Management", "Others"])
+            category = st.selectbox("📂 Department", departments)
             description = st.text_area("📝 Complaint Description", placeholder="Describe your issue", height=150)
 
         submit_button = st.form_submit_button("🚀 Submit Complaint")
@@ -54,6 +60,8 @@ with tab1:
             st.success("✅ Complaint submitted successfully!")
         else:
             st.error(f"❌ Failed to submit complaint.")
+
+
 
 ### TAB 2: View Complaint Status with Status & Timestamp
 with tab2:
