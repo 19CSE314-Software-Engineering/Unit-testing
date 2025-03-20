@@ -39,7 +39,7 @@ def fetch_employees():
 # Fetch waste collection locations
 def fetch_waste_locations():
     try:
-        response = supabase.table("waste_sites").select("site_id, location_name").execute()
+        response = supabase.table("waste_facilities").select("facility_id, state_name").execute()
         return response.data if response.data else []
     except Exception as e:
         st.error(f"Error fetching waste locations: {e}")
@@ -48,7 +48,7 @@ def fetch_waste_locations():
 # Assign employee to a waste site
 def assign_employee(employee_id, site_id):
     try:
-        response = supabase.table("waste_sites").update({"in_charge_id": employee_id}).eq("site_id", site_id).execute()
+        response = supabase.table("waste_facilities").update({"in_charge_id": employee_id}).eq("facility_id", site_id).execute()
         if response.data:
             st.success("Employee assigned successfully!")
         else:
@@ -59,7 +59,7 @@ def assign_employee(employee_id, site_id):
 # Fetch complaints
 def fetch_complaints():
     try:
-        response = supabase.table("customer_complaints").select("id, created_at, name, phone_number, category, description, status, email, assign").eq("category", "Waste").execute()
+        response = supabase.table("customer_complaints").select("id, created_at, name, phone_number, category, description, status, email, assign").eq("category", "waste").execute()
         return response.data if response.data else []
     except Exception as e:
         st.error(f"Error fetching complaints: {e}")
@@ -86,7 +86,7 @@ with tab1:
 
     if employees and waste_locations:
         employee_options = {emp["name"]: emp["id"] for emp in employees}
-        site_options = {site["location_name"]: site["site_id"] for site in waste_locations}
+        site_options = {site["state_name"]: site["facility_id"] for site in waste_locations}
         
         selected_employee = st.selectbox("Select Employee", list(employee_options.keys()))
         selected_site = st.selectbox("Select Waste Collection Site", list(site_options.keys()))
