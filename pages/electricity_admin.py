@@ -1,3 +1,4 @@
+# electricity_admin.py
 import streamlit as st
 import pandas as pd
 from supabase import create_client
@@ -5,7 +6,7 @@ import os
 from dotenv import load_dotenv
 from streamlit_extras.switch_page_button import switch_page
 import time
-from utils import add_logout_button 
+from utils import add_logout_button, fetch_electricity_employees, fetch_substation_locations, assign_employee_to_substation, fetch_electricity_complaints, update_electricity_complaint
 
 # Load environment variables
 load_dotenv()
@@ -14,6 +15,9 @@ load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Store Supabase client in session state for use in utils
+st.session_state["supabase"] = supabase
 
 # Ensure only Electricity Admin can access
 if "role" not in st.session_state or st.session_state["role"] != "Electricity Admin":
@@ -27,62 +31,13 @@ st.title("⚡ Admin Panel - Electricity Management")
 # Sidebar Logout Button
 add_logout_button()
 
-# Function to fetch employees
-def fetch_employees():
-    try:
-        response = supabase.table("employees").select("id, name").eq("dept_id", 2).execute()
-        return response.data if response.data else []
-    except Exception as e:
-        st.error(f"Error fetching employees: {e}")
-        return []
-
-# Function to fetch substation locations
-def fetch_substation_locations():
-    try:
-        response = supabase.table("electricity_substations").select("substation_id, state_name").execute()
-        return response.data if response.data else []
-    except Exception as e:
-        st.error(f"Error fetching substation locations: {e}")
-        return []
-
-# Function to assign employee to a substation
-def assign_employee(employee_id, substation_id):
-    try:
-        response = supabase.table("electricity_substations").update({"in_charge_id": employee_id}).eq("substation_id", substation_id).execute()
-        if response.data:
-            st.success("Employee assigned successfully!")
-        else:
-            st.error("Failed to assign employee.")
-    except Exception as e:
-        st.error(f"Error assigning employee: {e}")
-
-# Function to fetch complaints for Electricity department
-def fetch_complaints():
-    try:
-        response = supabase.table("customer_complaints").select("id, created_at, name, phone_number, category, description, status, email, assign").eq("category", "Electricity").execute()
-        return response.data if response.data else []
-    except Exception as e:
-        st.error(f"Error fetching complaints: {e}")
-        return []
-
-# Function to update complaint status and assignment
-def update_complaint(complaint_id, status, employee_name):
-    try:
-        response = supabase.table("customer_complaints").update({"status": status, "assign": employee_name}).eq("id", complaint_id).execute()
-        if response.data:
-            st.success("Complaint updated successfully!")
-        else:
-            st.error("Failed to update complaint.")
-    except Exception as e:
-        st.error(f"Error updating complaint: {e}")
-
 # UI with Tabs
 tab1, tab2 = st.tabs(["Assign Employees", "View Complaints"])
 
 with tab1:
     st.header("Assign Employees to Electricity Substations")
-    employees = fetch_employees()
-    substation_locations = fetch_substation_locations()
+    employees = fetch_electricity_employees(supabase)
+    substation_locations = fetch_substation_locations(supabase)
     
     if employees and substation_locations:
         employee_options = {emp["name"]: emp["id"] for emp in employees}
@@ -92,14 +47,22 @@ with tab1:
         selected_substation = st.selectbox("Select Substation Location", list(substation_options.keys()))
         
         if st.button("Assign Employee"):
-            assign_employee(employee_options[selected_employee], substation_options[selected_substation])
+            success, message = assign_employee_to_substation(
+                supabase=supabase,
+                employee_id=employee_options[selected_employee],
+                substation_id=substation_options[selected_substation]
+            )
+            if success:
+                st.success(message)
+            else:
+                st.error(message)
     else:
         st.warning("No employees or locations found.")
 
 with tab2:
     st.header("View and Manage Complaints")
-    complaints = fetch_complaints()
-    employees = fetch_employees()
+    complaints = fetch_electricity_complaints(supabase)
+    employees = fetch_electricity_employees(supabase)
     
     if complaints:
         for complaint in complaints:
@@ -113,10 +76,13 @@ with tab2:
                 
                 # Status selection
                 status_options = ["Pending", "In Progress", "Resolved"]
-                selected_status = st.selectbox(f"Update Status", status_options, index=status_options.index(complaint["status"]) if complaint["status"] in status_options else 0, key=f"status_{complaint['id']}")
+                selected_status = st.selectbox(
+                    f"Update Status",
+                    status_options,
+                    index=status_options.index(complaint["status"]) if complaint["status"] in status_options else 0,
+                    key=f"status_{complaint['id']}"
+                )
                 
-                
-
                 # Create a dictionary to map employee names to their IDs
                 employee_options = {emp["name"]: emp["id"] for emp in employees} if employees else {}
 
@@ -127,7 +93,7 @@ with tab2:
                 # Assign Employee using Employee Name but store Employee ID
                 selected_employee_name = st.selectbox(
                     f"Assign Employee",
-                    list(employee_options.keys()),  # Display names
+                    list(employee_options.keys()),
                     index=list(employee_options.keys()).index(assigned_employee_name) if assigned_employee_name in employee_options else 0,
                     key=f"employee_{complaint['id']}"
                 ) if employees else None
@@ -136,6 +102,15 @@ with tab2:
                 selected_employee_id = employee_options[selected_employee_name] if selected_employee_name else None
                 
                 if st.button(f"Update", key=f"update_{complaint['id']}"):
-                    update_complaint(complaint['id'], selected_status, selected_employee_id)
+                    success, message = update_electricity_complaint(
+                        supabase=supabase,
+                        complaint_id=complaint['id'],
+                        status=selected_status,
+                        employee_id=selected_employee_id
+                    )
+                    if success:
+                        st.success(message)
+                    else:
+                        st.error(message)
     else:
         st.warning("No complaints found.")

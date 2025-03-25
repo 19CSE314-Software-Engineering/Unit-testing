@@ -1,3 +1,4 @@
+# ADMIN_DASHBOARD.py
 import streamlit as st
 from supabase import create_client, Client
 import os
@@ -5,10 +6,8 @@ from dotenv import load_dotenv
 from streamlit_extras.switch_page_button import switch_page
 import pandas as pd
 import datetime
-from streamlit_extras.switch_page_button import switch_page
 import time
-from utils import add_logout_button 
-
+from utils import add_logout_button, create_employee, process_employee_data, create_department
 
 # Load environment variables
 load_dotenv()
@@ -20,23 +19,21 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 # Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 supabase.postgrest.auth(SUPABASE_KEY)
+
+# Store Supabase client in session state for use in utils
+st.session_state["supabase"] = supabase
+
 # Streamlit UI
 st.set_page_config(page_title="Admin Dashboard", page_icon="🔐", layout="wide")
-
 
 if "role" not in st.session_state or st.session_state["role"] != "Admin":
     st.error("Access Denied. Only Electricity Admins can access this page.")
     time.sleep(2)
-    switch_page("main") # Redirect to Home page
-
+    switch_page("main")  # Redirect to Home page
 
 st.title("Admin Dashboard")
 
-
-
 add_logout_button()
-
-
 
 # Tabs for Employee Management
 tab1, tab2, tab3 = st.tabs(["Create Employee", "View Employees", "Create Department & Position"])
@@ -78,50 +75,28 @@ with tab1:
             name = st.text_input("Full Name")
             email = st.text_input("Email (Must be Unique)")
             dob = st.date_input("Date of Birth", min_value=datetime.date(1900, 1, 1), max_value=datetime.date(2025, 12, 31))
-            contact_number = st.text_input("Contact Number")  # New input field
+            contact_number = st.text_input("Contact Number")
             gender = st.selectbox("Gender", ["Male", "Female", "Other"])
             default_password = "abcdef"
 
             # Button to create employee
             if st.button("Create Employee"):
-                if not name or not email:
-                    st.warning("Please fill in all required fields.")
+                success, message = create_employee(
+                    supabase=supabase,
+                    name=name,
+                    email=email,
+                    dob=dob,
+                    contact_number=contact_number,
+                    gender=gender,
+                    dept_id=selected_dept_id,
+                    position_id=selected_position_id,
+                    default_password=default_password
+                )
+                if success:
+                    st.success(message)
                 else:
-                    try:
-                        # Step 1: Create user in authentication module
-                        auth_response = supabase.auth.sign_up(
-                            {"email": email, "password": default_password}
-                        )
+                    st.error(message)
 
-                        if auth_response and auth_response.user:
-                            # Step 2: Add user to employees table
-                            employee_response = (
-                                supabase.table("employees")
-                                .insert({
-                                    "name": name,
-                                    "email": email,
-                                    "dob": dob.strftime("%Y-%m-%d"),
-                                    "contact_number": contact_number,
-                                    "gender": gender,
-                                    "dept_id": selected_dept_id,
-                                    "position_id": selected_position_id
-                                })
-                                .execute()
-                            )
-
-                            if employee_response.data:
-                                st.success("Employee created successfully!")
-                            else:
-                                st.error("Failed to add employee to database.")
-
-                        else:
-                            st.error("User authentication creation failed.")
-
-                    except Exception as e:
-                        st.error(f"Error: {str(e)}")
-
-
-### **🔹 Tab 2: View Employees**
 ### **🔹 Tab 2: View Employees**
 with tab2:
     st.subheader("Employee List")
@@ -138,24 +113,15 @@ with tab2:
     if not employees:
         st.info("No employees found.")
     else:
-        # Process the nested data before creating DataFrame
-        processed_employees = []
-        for emp in employees:
-            processed_emp = emp.copy()
-            # Extract department name from nested object
-            if "department" in processed_emp and processed_emp["department"]:
-                processed_emp["department"] = processed_emp["department"]["dept_name"]
-            # Extract position name from nested object
-            if "positions" in processed_emp and processed_emp["positions"]:
-                processed_emp["positions"] = processed_emp["positions"]["position_name"]
-            processed_employees.append(processed_emp)
-            
+        # Process the data using the new function
+        processed_employees = process_employee_data(employees)
+        
         # Convert to DataFrame and display
         df = pd.DataFrame(processed_employees)
-        # You can rename columns if needed
         df.rename(columns={"department": "Department", "positions": "Position"}, inplace=True)
         st.dataframe(df, hide_index=True)
 
+### **🔹 Tab 3: Create Department & Position**
 with tab3:
     st.subheader("Root Admin Panel")
 
@@ -163,15 +129,11 @@ with tab3:
     new_dept_name = st.text_input("New Department Name")
 
     if st.button("Create Department"):
-        if new_dept_name:
-            dept_data = {"dept_name": new_dept_name}
-            response = supabase.table("department").insert(dept_data).execute()
-            if response.data:
-                st.success("Department added successfully!")
-            else:
-                st.error("Failed to add department.")
+        success, message = create_department(supabase, new_dept_name)
+        if success:
+            st.success(message)
         else:
-            st.warning("Enter a department name.")
+            st.error(message)
 
     st.write("### Manage Positions")
     # Fetch departments again for position creation

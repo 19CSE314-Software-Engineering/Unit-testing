@@ -1,7 +1,9 @@
+# CRISIS_ADMIN.py
 import streamlit as st
 from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
+from utils import fetch_crisis_reports, update_crisis_report, delete_crisis_report, post_news_update, fetch_recent_news_updates
 
 # Load environment variables
 load_dotenv()
@@ -33,10 +35,10 @@ st.success("✅ Access Granted! Modify or resolve crisis reports below.")
 
 # Fetch Crisis Reports Assigned to the Logged-in Employee
 employee_id = st.session_state.get("employee_id")
-response = supabase.table("crisis_reports").select("*").eq("in_charge_id", employee_id).execute()
+crises = fetch_crisis_reports(supabase, employee_id)
 
-if response.data:
-    for crisis in response.data:
+if crises:
+    for crisis in crises:
         with st.expander(f"🚨 {crisis['name']} ({crisis['crisis_type']}) - Severity: {crisis['severity']}"):
             st.write(f"**Location:** {crisis['state_name']}")
             st.write(f"**Description:** {crisis['description']}")
@@ -47,17 +49,25 @@ if response.data:
             new_description = st.text_area("Update Description", crisis['description'], key=f"desc_{crisis['crisis_id']}")
 
             if st.button("Update Crisis", key=f"update_{crisis['crisis_id']}"):
-                supabase.table("crisis_reports").update({
-                    "severity": new_severity,
-                    "description": new_description,
-                }).eq("crisis_id", crisis['crisis_id']).execute()
-                st.success("Crisis updated successfully! Refresh to see changes.")
+                success, message = update_crisis_report(
+                    supabase=supabase,
+                    crisis_id=crisis['crisis_id'],
+                    severity=new_severity,
+                    description=new_description
+                )
+                if success:
+                    st.success(message)
+                else:
+                    st.error(message)
 
             # Delete Crisis
             if st.button("Resolve & Remove Crisis", key=f"delete_{crisis['crisis_id']}"):
-                supabase.table("crisis_reports").delete().eq("crisis_id", crisis['crisis_id']).execute()
-                st.warning("Crisis resolved and removed.")
-                st.experimental_rerun()
+                success, message = delete_crisis_report(supabase, crisis['crisis_id'])
+                if success:
+                    st.warning(message)
+                    st.experimental_rerun()
+                else:
+                    st.error(message)
 else:
     st.info("No crisis reports assigned to you.")
 
@@ -76,28 +86,24 @@ crisis_dict = {crisis["name"]: crisis["crisis_id"] for crisis in crisis_options}
 selected_crisis_name = st.selectbox("Related Crisis (Optional)", ["None"] + list(crisis_dict.keys()))
 
 if st.button("Post News Update"):
-    if not news_title or not news_content:
-        st.warning("⚠️ Please enter both a title and content for the update.")
-    else:
-        # Prepare database entry
-        new_entry = {
-            "title": news_title,
-            "content": news_content,
-            "crisis_id": crisis_dict.get(selected_crisis_name, None),
-            "posted_by": st.session_state.get("user").email
-        }
-
-        # Insert into Supabase
-        supabase.table("crisis_newsboard").insert(new_entry).execute()
-        st.success("✅ News update posted successfully!")
+    success, message = post_news_update(
+        supabase=supabase,
+        title=news_title,
+        content=news_content,
+        crisis_id=crisis_dict.get(selected_crisis_name, None),
+        posted_by=st.session_state.get("user").email if st.session_state.get("user") else None
+    )
+    if success:
+        st.success(message)
         st.rerun()
+    else:
+        st.warning(message)
 
 # ------------------ DISPLAY EXISTING NEWS UPDATES ------------------ #
 
 st.header("📢 Recent News Updates")
 
-news_response = supabase.table("crisis_newsboard").select("*").order("id", desc=True).limit(10).execute()
-news_data = news_response.data if news_response.data else []
+news_data = fetch_recent_news_updates(supabase, limit=10)
 
 if news_data:
     for news in news_data:

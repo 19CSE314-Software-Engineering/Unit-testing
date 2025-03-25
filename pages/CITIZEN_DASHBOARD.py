@@ -1,7 +1,9 @@
+# CITIZEN_DASHBOARD.py
 import streamlit as st
 from supabase import create_client
 import os
 from dotenv import load_dotenv
+from utils import fetch_welfare_schemes, check_eligibility, apply_for_scheme, submit_complaint, fetch_complaints_by_email, fetch_notifications
 
 # Load environment variables
 load_dotenv()
@@ -19,6 +21,7 @@ st.write("Welcome to the Citizen Dashboard! Here you can submit complaints, view
 
 # Tabs for Navigation
 tab1, tab2, tab3, tab4 = st.tabs(["📝 Create Complaint", "📋 View Complaints", "🔔 Notifications", "💰 Welfare Schemes"])
+
 ### TAB 1: Create Complaint Form
 with tab1:
     st.subheader("📝 Submit a Complaint")
@@ -29,7 +32,7 @@ with tab1:
     if response.data:
         departments = list(set([dept["dept_name"] for dept in response.data if "dept_name" in dept]))
     else:
-        departments = ["General"]  # Default option if no departments are found
+        departments = ["General"]
     
     with st.form(key="complaint_form"):
         col1, col2 = st.columns(2)
@@ -46,22 +49,18 @@ with tab1:
         submit_button = st.form_submit_button("🚀 Submit Complaint")
     
     if submit_button:
-        # Insert into Supabase table
-        data = {
-            "email": email,
-            "name": name,
-            "phone_number": phone_number,
-            "category": category,
-            "description": description
-        }
-        response = supabase.table("customer_complaints").insert(data).execute()
-        
-        if response.data:
-            st.success("✅ Complaint submitted successfully!")
+        success, message = submit_complaint(
+            supabase=supabase,
+            email=email,
+            name=name,
+            phone_number=phone_number,
+            category=category,
+            description=description
+        )
+        if success:
+            st.success("✅ " + message)
         else:
-            st.error(f"❌ Failed to submit complaint.")
-
-
+            st.error("❌ " + message)
 
 ### TAB 2: View Complaint Status with Status & Timestamp
 with tab2:
@@ -70,10 +69,10 @@ with tab2:
 
     if st.button("🔍 Fetch Complaints"):
         if email:
-            response = supabase.table("customer_complaints").select("category, description, status, created_at").eq("email", email).execute()
-            if response.data:
+            complaints = fetch_complaints_by_email(supabase, email)
+            if complaints:
                 st.write("Your Complaints:")
-                st.table(response.data)
+                st.table(complaints)
             else:
                 st.warning("⚠️ No complaints found for this email.")
         else:
@@ -82,11 +81,11 @@ with tab2:
 ### TAB 3: View Notifications
 with tab3:
     st.subheader("🔔 Notifications")
-    response = supabase.table("notifications").select("notification, created_at").order("created_at", desc=True).execute()
+    notifications = fetch_notifications(supabase)
     
-    if response.data:
+    if notifications:
         st.write("Latest Notifications:")
-        st.table(response.data)
+        st.table(notifications)
     else:
         st.info("ℹ️ No notifications available at the moment.")
 
@@ -95,11 +94,7 @@ with tab4:
     st.subheader("📜 Welfare Scheme Eligibility & Registration")
 
     # Fetch available welfare schemes
-    def fetch_schemes():
-        response = supabase.table("welfare_schemes").select("*").execute()
-        return response.data if response.data else []
-
-    schemes = fetch_schemes()
+    schemes = fetch_welfare_schemes(supabase)
 
     st.subheader("📋 Available Welfare Schemes")
     for scheme in schemes:
@@ -132,25 +127,23 @@ with tab4:
     # Check eligibility
     selected_scheme = next((s for s in schemes if s["scheme_name"] == selected_scheme_name), None)
     if selected_scheme:
-        eligibility_criteria = selected_scheme["eligibility_criteria"].lower()
-
-        is_eligible = (
-            ("age" in eligibility_criteria and str(age) in eligibility_criteria) or
-            ("income" in eligibility_criteria and str(income) in eligibility_criteria) or
-            ("employment" in eligibility_criteria and employment_status.lower() in eligibility_criteria)
-        )
+        is_eligible = check_eligibility(selected_scheme, age, income, employment_status)
 
         if is_eligible:
             st.success(f"🎉 Congratulations! You are eligible for {selected_scheme_name}!")
             if st.button("📩 Apply Now"):
-                supabase.table("citizen_applications").insert({
-                    "name": citizen_name,
-                    "age": int(age),
-                    "income": int(income),
-                    "employment_status": employment_status,
-                    "crisis_type": crisis_type,
-                    "scheme_id": scheme_options[selected_scheme_name]
-                }).execute()
-                st.success("✅ Application Submitted Successfully!")
+                success, message = apply_for_scheme(
+                    supabase=supabase,
+                    name=citizen_name,
+                    age=age,
+                    income=income,
+                    employment_status=employment_status,
+                    crisis_type=crisis_type,
+                    scheme_id=scheme_options[selected_scheme_name]
+                )
+                if success:
+                    st.success("✅ " + message)
+                else:
+                    st.error("❌ " + message)
         else:
             st.error(f"❌ Sorry, you are not eligible for {selected_scheme_name}.")
